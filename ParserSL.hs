@@ -7,12 +7,14 @@ import Data.Char
 {- Grupo 1
    Gramática SL -}
 
-data SL = Program String [Decl] [Inst]
+data SL = Program String [Pre] [Decl] [Inst] [Post]
         deriving Show
 
-data Pre = Old      Boolean
-         | Pre      Boolean
-         | Nothing  Boolean
+data Pre = Pre Boolean
+         deriving (Show, Eq, Ord)
+
+data Post = Post Boolean
+         deriving (Show, Eq, Ord)
 
 data Decl = Atr  TypeDecl String Expr
           | AtrT TypeDecl String
@@ -54,13 +56,18 @@ data Boolean = Greater    Expr Boolean
 {- Grupo 2
    Parser SL -}
 
-parser = f <$> token' "program" <*> pString <*> symbol' '{' <*> decls <*> spaces' <*> insts <*> symbol' '}'
-     where f _ a _ b _ c _ = Program a b c
+parser = f <$> token' "pre" <*> pres <*> token' "program" <*> pString <*> symbol' '{' <*> decls <*> spaces' <*> insts <*> symbol' '}' <*> token' "post" <*> posts
+     where f _ a _ b _ c _ d _ _ e = Program b a c d e
 
---pres = oneOrMore pre
+pres = zeroOrMore pre
 
---pre = f <$> boolean <*> symbol' ';'
---    where f a _ = Pre a b
+pre = f <$> boolean <*> symbol' ';'
+    where f a _ = Pre a
+
+posts = zeroOrMore post
+
+post = f <$> boolean <*> symbol' ';'
+        where f a _ = Post a
 
 decls = oneOrMore decl
 
@@ -140,7 +147,7 @@ boolean = (\a -> Expr a) <$> expr
    Programas Sl -}
 
 sl1 = x
-   where ((x,y):xs) = parser "program a { int aux; int b; Print aux; Print r; }"
+   where ((x,y):xs) = parser "pre a>c; b>c; program a { int aux; int b; Print aux; Print r; } post a==5;"
 
 sl2 = x
    where ((x,y):xs) = parser "program a { int aux;int b; if(a>e) then {Print aux;} else{r=r;} }"
