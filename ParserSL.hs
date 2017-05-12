@@ -28,12 +28,15 @@ data TypeDecl = Int
 
 data Inst = Assign      String Expr
           | IfThenElse  Boolean [Inst] [Inst]
-          | For         Decl Boolean Expr [Inst]
-          | While       Boolean [Inst]
+          | For         Decl Boolean Expr [Inv] [Inst]
+          | While       Boolean [Inv] [Inst]
           | Read        Expr
           | Print       Expr
           | Return      Expr
           deriving (Show , Eq , Ord)
+
+data Inv = Inv Boolean
+         deriving (Show, Eq, Ord)
 
 data Expr = Const Integer
           | Var   String
@@ -56,7 +59,8 @@ data Boolean = Greater    Expr Boolean
 {- Grupo 2
    Parser SL -}
 
-parser = f <$> token' "pre" <*> pres <*> token' "program" <*> pString <*> symbol' '{' <*> decls <*> spaces' <*> insts <*> symbol' '}' <*> token' "post" <*> posts
+parser = f <$> token' "pre" <*> pres <*> token' "program" <*> pString <*> symbol' '{' <*> decls
+          <*> spaces' <*> insts <*> symbol' '}' <*> token' "post" <*> posts
      where f _ a _ b _ c _ d _ _ e = Program b a c d e
 
 pres = zeroOrMore pre
@@ -105,17 +109,23 @@ inst =  f  <$> token' "Print"  <*> expr <*> symbol' ';'
          <*> insts <*> symbol' '}'
      <|> j <$> token' "return" <*> expr <*> symbol' ';'
      <|> k <$> token' "read" <*> expr <*> symbol' ';'
-     <|> l <$> token' "for" <*> symbol' '(' <*> decl <*> boolean <*> symbol' ';'
-         <*> expr <*> symbol' ')' <*> symbol' '{' <*> insts <*> symbol' '}'
-     <|> m <$> token' "while" <*> symbol' '(' <*> boolean <*> symbol' ')' <*> symbol' '{' <*> insts <*> symbol' '}'
-   where f _ b _  =                   Print b
-         g a b c _  =                 Assign a c
-         h _ _ a _ _ _ b _ _ _ c _  = IfThenElse a b c
-         i _ _ a _ _ _ b _ =          IfThenElse a b []
-         j _ a _ =                    Return a
-         k _ a _ =                    Read a
-         l _ _ a b _ c _ _ d _ =      For a b c d
-         m _ _ a _ _ b _ =            While a b
+     <|> l <$> token' "for" <*> symbol' '(' <*> decl <*> boolean <*> symbol' ';' <*> expr <*> symbol' ')'
+         <*> symbol' '{' <*> token' "inv" <*> invs <*> insts <*> symbol' '}'
+     <|> m <$> token' "while" <*> symbol' '(' <*> boolean <*> symbol' ')' <*> symbol' '{' <*> token' "inv"
+         <*> invs <*> insts <*> symbol' '}'
+   where f _ b _ =                   Print b
+         g a _ c _ =                 Assign a c
+         h _ _ a _ _ _ b _ _ _ c _ = IfThenElse a b c
+         i _ _ a _ _ _ b _ =         IfThenElse a b []
+         j _ a _ =                   Return a
+         k _ a _ =                   Read a
+         l _ _ a b _ c _ _ _ d e _ = For a b c d e
+         m _ _ a _ _ _ b c _ =       While a b c
+
+invs = zeroOrMore inv
+
+inv = f <$> boolean <*> symbol' ';'
+    where f a _ = Inv a
 
 expr = id <$> expressao
     <|> f <$> expressao <*> symbol' '*' <*> expr
@@ -156,7 +166,7 @@ sl3 = x
    where ((x,y):xs) = parser "program a {int aux=4;int b=t;aux= 10;Print aux; Print 10+5;if(x>5) then {b=5;} else{b=6;} }"
 
 sl4 = x
-   where ((x,y):xs) = parser "program a {int aux=4;int b=t;aux= 10;Print aux; while(a>3){aux=10;Print t;}Print t; }"
+   where ((x,y):xs) = parser "pre a>c; b>c; program a {int aux=4;int b=t;aux= 10;Print aux; while(a>3){ inv a>c; aux=10;Print t;} Print t; } post a==5;"
 
 sl5 = x
    where ((x,y):xs) = parser "program a {int aux=4;int b=t;aux= 10;Print aux; for(int a=1;a>3;a=4){aux=10;Print t;}Print t; }"
