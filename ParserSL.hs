@@ -101,7 +101,7 @@ decl =  f  <$> pTypeInt'  <*> pString <*> symbol' '=' <*> expr <*> symbol' ';'
 
 insts = oneOrMore inst
 
-inst =  f  <$> token' "Print"  <*> expr <*> symbol' ';'
+inst =  f  <$> token' "print"  <*> expr <*> symbol' ';'
      <|> g <$> pString <*> symbol' '=' <*> expr <*> symbol' ';'
      <|> h <$> token' "if" <*> symbol' '(' <*> boolean <*> symbol' ')' <*> token' "then" <*> symbol' '{'
          <*> insts <*> symbol' '}' <*> token' "else" <*> symbol' '{' <*> insts <*> symbol' '}'
@@ -157,19 +157,19 @@ boolean = (\a -> Expr a) <$> expr
    Programas Sl -}
 
 sl1 = x
-   where ((x,y):xs) = parser "pre a>c; b>c; program a { int aux; int b; Print aux; Print r; } post a==5;"
+   where ((x,y):xs) = parser "pre a>c; b>c; program a { int aux; int b; print aux; print r; } post a==5;"
 
 sl2 = x
-   where ((x,y):xs) = parser "program a { int aux;int b; if(a>e) then {Print aux;} else{r=r;} }"
+   where ((x,y):xs) = parser "program a { int aux;int b; if(a>e) then {print aux;} else{r=r;} }"
 
 sl3 = x
-   where ((x,y):xs) = parser "program a {int aux=4;int b=t;aux= 10;Print aux; Print 10+5;if(x>5) then {b=5;} else{b=6;} }"
+   where ((x,y):xs) = parser "program a {int aux=4;int b=t;aux= 10;print aux; print 10+5;if(x>5) then {b=5;} else{b=6;} }"
 
 sl4 = x
-   where ((x,y):xs) = parser "pre a>c; b>c; program a {int aux=4;int b=t;aux= 10;Print aux; while(a>3){ inv a>c; aux=10;Print t;} Print t; } post a==5;"
+   where ((x,y):xs) = parser "pre a>c; b>c; program a {int aux=4;int b=t;aux= 10;print aux; while(a>3){ inv a>c; aux=10;print t;} print t; } post a==5;"
 
 sl5 = x
-   where ((x,y):xs) = parser "program a {int aux=4;int b=t;aux= 10;Print aux; for(int a=1;a>3;a=4){aux=10;Print t;}Print t; }"
+   where ((x,y):xs) = parser "program a {int aux=4;int b=t;aux= 10;print aux; for(int a=1;a>3;a=4){aux=10;print t;}print t; }"
 
 sl6 = x
-   where ((x,y):xs) = parser "program a {int aux=4;int b=t;aux= 10;Print aux; for(int a=1;a>3;a=4){while(a>4){r=t;}aux=10;Print t;}Print t; }"
+   where ((x,y):xs) = parser "program a {int aux=4;int b=t;aux= 10;print aux; for(int a=1;a>3;a=4){while(a>4){r=t;}aux=10;print t;}print t; }"
