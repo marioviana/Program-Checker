@@ -3,7 +3,7 @@ Project from Formal Verification curricular unit.
 
 The verifier should comprehend a parser and a VC-Gen and manage the proof of these conditions by interacting with an automatic proofing tool, in this case the Z3.
 
-Sample code to demonstrate the syntax of our language we define here.
+Sample code to demonstrate the syntax of our language we define here (Simple Language).
 
 ```C
 pre
