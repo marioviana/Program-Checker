@@ -7,7 +7,7 @@ import Data.Char
 {- Grupo 1
    Gramática SL -}
 
-data SL = Program String [Pre] [Decl] [Inst] [Post]
+data SL = Program String [DeclProg] [Pre] [Decl] [Inst] [Post]
         deriving Show
 
 data Pre = Pre Boolean
@@ -19,6 +19,9 @@ data Post = Post Boolean
 data Decl = Atr  TypeDecl String Expr
           | AtrT TypeDecl String
           | AtrS TypeDecl [Expr]
+          deriving (Show , Eq , Ord)
+
+data DeclProg = AtrProg TypeDecl String
           deriving (Show , Eq , Ord)
 
 data TypeDecl = Int
@@ -59,9 +62,9 @@ data Boolean = Greater    Expr Boolean
 {- Grupo 2
    Parser SL -}
 
-parser = f <$> token' "pre" <*> pres <*> token' "program" <*> pString <*> symbol' '{' <*> decls
+parser = f <$> token' "pre" <*> pres <*> token' "program" <*> pString <*> symbol' '(' <*> declsProg <*> symbol' ')' <*> symbol' '{' <*> decls
           <*> spaces' <*> insts <*> symbol' '}' <*> token' "post" <*> posts
-     where f _ a _ b _ c _ d _ _ e = Program b a c d e
+     where f _ a _ b _ g _ _ c _ d _ _ e = Program b g a c d e
 
 pres = zeroOrMore pre
 
@@ -73,12 +76,12 @@ posts = zeroOrMore post
 post = f <$> boolean <*> symbol' ';'
         where f a _ = Post a
 
-decls = oneOrMore decl
-
 varios = oneOrMore vario
 
 vario = f <$> symbol' ',' <*> expr
    where f _ s = s
+
+decls = oneOrMore decl
 
 decl =  f  <$> pTypeInt'  <*> pString <*> symbol' '=' <*> expr <*> symbol' ';'
     <|> g  <$> pTypeChar' <*> pString <*> symbol' '=' <*> expr <*> symbol' ';'
@@ -98,6 +101,15 @@ decl =  f  <$> pTypeInt'  <*> pString <*> symbol' '=' <*> expr <*> symbol' ';'
            p1 _ b c _  =  AtrS Int ([b]++c)
            p2 _ b c _  =  AtrS Char ([b]++c)
            p3 _ b c _  =  AtrS Bool ([b]++c)
+
+declsProg = oneOrMore declProg
+
+declProg = i  <$> pTypeInt'  <*> pString <*> symbol' ';'
+    <|> j  <$> pTypeChar' <*> pString <*> symbol' ';'
+    <|> k  <$> pTypeBool' <*> pString <*> symbol' ';'
+     where i _ b _     =  AtrProg Int b
+           j _ b _     =  AtrProg Char b
+           k _ b _     =  AtrProg Bool b
 
 insts = oneOrMore inst
 
@@ -157,7 +169,7 @@ boolean = (\a -> Expr a) <$> expr
    Programas Sl -}
 
 sl1 = x
-   where ((x,y):xs) = parser "pre a>c; b>c; program a { int aux; int b; print aux; print r; } post a==5;"
+   where ((x,y):xs) = parser "pre a>c; b>c; program a (int x; int y;){ int aux; int b; print aux; print r; } post a==5;"
 
 sl2 = x
    where ((x,y):xs) = parser "program a { int aux;int b; if(a>e) then {print aux;} else{r=r;} }"
