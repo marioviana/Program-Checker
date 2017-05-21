@@ -10,17 +10,17 @@ pre
   a>c;
   b>c;
 
-program a {
+program a (int x; int y;){
   int aux = 4;
-  int b = t;
+  int c = y;
   aux = 10;
   print aux;
-  while(a > 3){
-    inv a > c;
+  while(x > 3){
+    inv x > c;
     aux = 10;
-    print t;
+    print y;
   }
-  print t;
+  print y;
 }
 
 post
