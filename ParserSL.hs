@@ -175,9 +175,6 @@ boolean = (\a -> Expr a) <$> expr
 sl1 = x
    where ((x,y):xs) = parser "pre a>c; b>c; program a (bool x; int y;){ int aux; int b; print aux; print r; } post a==5;"
 
-sl1B = x
-   where ((x,y):xs) = parser "pre a>c; b>c; program a (int x; int y;){ int aux; int b; try { print aux; } catch { print r2; } print r; } post a==5;"
-
 sl2 = x
    where ((x,y):xs) = parser "program a { int aux;int b; if(a>e) then {print aux;} else{r=r;} }"
 
@@ -186,6 +183,9 @@ sl3 = x
 
 sl4 = x
    where ((x,y):xs) = parser "pre a>c; b>c; program a (int x; int y;) {int aux=4;int b=t;aux= 10;print aux; while(a>3){ inv a>c; aux=10;print t;} print t; } post a==5;"
+
+sl4B = x
+   where ((x,y):xs) = parser "pre a>c; b>c; program a (int x; int y;) {int aux=4;int b=t;aux= 10;print aux; try{while(a>3){ inv a>c; aux=10;print t;}} catch{print a;} print t; } post a==5;"
 
 sl5 = x
    where ((x,y):xs) = parser "program a {int aux=4;int b=t;aux= 10;print aux; for(int a=1;a>3;a=4){aux=10;print t;}print t; }"
