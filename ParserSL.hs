@@ -36,6 +36,7 @@ data Inst = Assign      String Expr
           | Read        Expr
           | Print       Expr
           | Return      Expr
+          | Try         [Inst] [Inst]
           deriving (Show , Eq , Ord)
 
 data Inv = Inv Boolean
@@ -125,6 +126,8 @@ inst =  f  <$> token' "print"  <*> expr <*> symbol' ';'
          <*> symbol' '{' <*> token' "inv" <*> invs <*> insts <*> symbol' '}'
      <|> m <$> token' "while" <*> symbol' '(' <*> boolean <*> symbol' ')' <*> symbol' '{' <*> token' "inv"
          <*> invs <*> insts <*> symbol' '}'
+     <|> n <$> token' "try" <*> symbol' '{' <*> insts <*> symbol' '}' <*> token' "catch" <*> symbol' '{' 
+         <*> insts <*> symbol' '}'
    where f _ b _ =                   Print b
          g a _ c _ =                 Assign a c
          h _ _ a _ _ _ b _ _ _ c _ = IfThenElse a b c
@@ -133,6 +136,7 @@ inst =  f  <$> token' "print"  <*> expr <*> symbol' ';'
          k _ a _ =                   Read a
          l _ _ a b _ c _ _ _ d e _ = For a b c d e
          m _ _ a _ _ _ b c _ =       While a b c
+         n _ _ a _ _ _ b _ =         Try a b
 
 invs = zeroOrMore inv
 
@@ -170,6 +174,9 @@ boolean = (\a -> Expr a) <$> expr
 
 sl1 = x
    where ((x,y):xs) = parser "pre a>c; b>c; program a (int x; int y;){ int aux; int b; print aux; print r; } post a==5;"
+
+sl1B = x
+   where ((x,y):xs) = parser "pre a>c; b>c; program a (int x; int y;){ int aux; int b; try { print aux; } catch { print r2; } print r; } post a==5;"
 
 sl2 = x
    where ((x,y):xs) = parser "program a { int aux;int b; if(a>e) then {print aux;} else{r=r;} }"
