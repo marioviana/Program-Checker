@@ -15,14 +15,16 @@ program a (int x; int y;){
   int c = y;
   aux = 10;
   print aux;
-  try{
-  while(x > 3){
-    inv x > c;
-    aux = 10;
-    print y;
+  try {
+    while(x > 3) {
+      inv x > c;
+      aux = 10;
+      print y;
+    }
   }
+  catch {
+    print x;
   }
-  catch{print x;}
   print y;
 }
 
