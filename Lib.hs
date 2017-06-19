@@ -93,6 +93,8 @@ pString = oneOrMore $ satisfy (\x -> isAlpha x)
 
 pInt = oneOrMore $ satisfy (\x -> isDigit x)
 
+pBool = True
+
 pTypeInt' =  token' "int"
 pTypeChar' = token' "char"
 pTypeBool' = token' "bool"

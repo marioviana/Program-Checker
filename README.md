@@ -28,6 +28,8 @@ program a (int x; int y;){
   print y;
 }
 
-post
+postn
   a==5;
+poste
+  false;
 ```
