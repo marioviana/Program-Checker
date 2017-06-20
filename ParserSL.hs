@@ -235,7 +235,7 @@ boolTobool2 (Not a)  = Not2 (Expr2 a)
 
 
 slt = x
-   where ((x,y):xs) = parser "pre x>100; program a (int x;){ int b; while(x<1000){ inv 100<x; x = x;} } postn x==1000; poste false;"
+   where ((x,y):xs) = parser "pre x>100; program a (int x;){ int b; while(x<1000){ inv 100<x; x = x+1;} } postn x==1000; poste false;"
 
 sl1 = x
    where ((x,y):xs) = parser "pre a>c; program a (bool x; int y;){ int aux; int b; print aux; if (a>b) then {print a;} else {print b;} } postn a==5; poste false;"

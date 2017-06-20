@@ -94,28 +94,6 @@ boolExprToZ3 (Implies2 a b) = do {
   mkImplies c d
 }
 
-
-
-{-vcg :: SL -> [Boolean]
-vcg (TinyL p s q1 q2) = [Implies p (wp s q1 q2)] ++ (vcaux s q1 q2)
--}
-
-{-= Assign      String Expr
-          | IfThenElse  Boolean [Inst] [Inst]
-          | For         Decl Boolean Expr [Inv] [Inst]
-          | While       Boolean [Inv] [Inst]
-          | Read        Expr
-          | Print       Expr
-          | Return      Expr
-          | Try         [Inst] [Inst]
-          | Throw
--}
-
-
-
----- 
-
-
 vcs :: MonadZ3 z3 => SL -> z3 [AST]
 vcs = sequence . vcg2Z3 . vcg
 
@@ -186,31 +164,45 @@ substitute (Same a b) x e = Same (substitute a x e) (substitute b x e)
 substitute a x e = a
 
 
+auxPrintVCs []     = []
+auxPrintVCs (x:xs) = auxPrintVC x ++ "\n" ++ auxPrintVCs xs
+
+
+auxPrintVC (Expr2 a) = auxPrintExpr a
+auxPrintVC (Greater2 a b) = (auxPrintExpr a) ++ " > " ++ (auxPrintExpr b)
+auxPrintVC (GreaterEqual2 a b) = (auxPrintExpr a) ++ " >= " ++ (auxPrintExpr b)
+auxPrintVC (Less2 a b) = (auxPrintExpr a) ++ " < " ++ (auxPrintExpr b)
+auxPrintVC (LessEqual2 a b) = (auxPrintExpr a) ++ " <= " ++ (auxPrintExpr b)
+auxPrintVC (And2 a b) = (auxPrintVC a) ++ " && " ++ (auxPrintVC b)
+auxPrintVC (Orl2 a b) = (auxPrintVC a) ++ " || " ++ (auxPrintVC b)
+auxPrintVC (Equal2 a b) = (auxPrintExpr a) ++ " == " ++ (auxPrintExpr b)
+auxPrintVC (Different2 a b) = (auxPrintExpr a) ++ " != " ++ (auxPrintExpr b)
+auxPrintVC (BoolConst2 a) = show a
+auxPrintVC (Implies2 a b) = (auxPrintVC a) ++ " ==> " ++ (auxPrintVC b)
+auxPrintVC (Not2 a ) = "! (" ++ (auxPrintVC a) ++ ")"
+
+auxPrintExpr (Const a) = show a
+auxPrintExpr (Var a) = a
+auxPrintExpr (Add a b) = (auxPrintExpr a) ++ " + " ++ (auxPrintExpr b)
+auxPrintExpr (Mul a b) = (auxPrintExpr a) ++ " * " ++ (auxPrintExpr b)
+auxPrintExpr (Div a b) = (auxPrintExpr a) ++ " / " ++ (auxPrintExpr b)
+auxPrintExpr (Sub a b) = (auxPrintExpr a) ++ " - " ++ (auxPrintExpr b)
+auxPrintExpr (Same a b) = (auxPrintExpr a) ++ " = " ++ (auxPrintExpr b)
+
+
+
+
 script :: SL -> Z3 [Result]
 script x = do
     vc <- vcs x
     mapM (\l -> reset >> assert l >> check) vc
 
-main :: IO ()
 main = do 
-    --putStrLn "Nome do ficheiro a dar parse:"
-    --f <- getLine
-    --tiny <- parseFile f
-    --putStrLn $ lstPrettyPrint (Set.toList $ vcg tiny)
+    putStrLn $ auxPrintVCs (vcg slt)
 
     result <- evalZ3 $ script slt
     mapM_ print result
 
-{-
-substitute:: Expr -> String -> Expr -> Expr
-substitute (Var s) x e = if s == x then e
-                            else Var s
 
-substitute (Neg exp) x e = Neg (substitute exp x e)
-substitute (IntBinary op exp1 exp2) x e = IntBinary op (substitute exp1 x e) (substitute exp2 x e)
-substitute exp x e = exp
--}
---vcgenerator :: SL -> [Boolean]
---vcgenerator (SL a b c d e f g)
 
 
