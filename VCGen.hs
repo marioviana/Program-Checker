@@ -31,46 +31,51 @@ intExprToZ3 (Sub a b) = do {
   mkSub [c, d]
 }
 
-boolExprToZ3 (Boolean e)
+boolExprToZ3 (BoolConst e)
       | e = mkTrue
       | otherwise = mkFalse
 
 boolExprToZ3 (Less a b) = do {
   c <- intExprToZ3 a;
-  d <- intExprToZ3 b;
+  d <- boolExprToZ3 b;
   mkLt c d
 }
 
 boolExprToZ3 (LessEqual a b) = do {
   c <- intExprToZ3 a;
-  d <- intExprToZ3 b;
+  d <- boolExprToZ3 b;
   mkLe c d
 }
 
 boolExprToZ3 (Greater a b) = do {
   c <- intExprToZ3 a;
-  d <- intExprToZ3 b;
+  d <- boolExprToZ3 b;
   mkGt c d
 }
 
 boolExprToZ3 (GreaterEqual a b) = do {
   c <- intExprToZ3 a;
-  d <- intExprToZ3 b;
+  d <- boolExprToZ3 b;
   mkGe c d
 }
 
 boolExprToZ3 (Equal a b) = do {
   c <- intExprToZ3 a;
-  d <- intExprToZ3 b;
+  d <- boolExprToZ3 b;
   mkEq c d
 }
 
 boolExprToZ3 (Different a b) = do {
   c <- intExprToZ3 a;
-  d <- intExprToZ3 b;
+  d <- boolExprToZ3 b;
   mkEq c d >>= mkNot
 }
 
+vcg :: SL -> [Boolean]
+vcg (TinyL p s q1 q2) = [Implies p (wp s q1 q2)] ++ (vcaux s q1 q2)
+
+vcaux :: [Stmt] -> BoolExpr -> BoolExpr -> [BoolExpr]
+asd
 --vcgenerator :: SL -> [Boolean]
 --vcgenerator (SL a b c d e f g)
 

@@ -58,13 +58,13 @@ data Boolean = Expr         Expr
              | GreaterEqual Expr Boolean
              | Less         Expr Boolean
              | LessEqual    Expr Boolean
-             | And          Boolean Boolean
-             | Orl          Boolean Boolean
+             | And          Expr Boolean
+             | Orl          Expr Boolean
              | Equal        Expr Boolean
              | Different    Expr Boolean
              | BoolConst    Bool
-             | Implies      Boolean Boolean
-             | Not          Boolean
+             | Implies      Expr Boolean
+             | Not          Expr
              deriving (Show , Eq , Ord)
 
 {- Grupo 2
@@ -174,18 +174,20 @@ expressao =  f <$> pString
   where f a = Var a
         g a = Const (read a :: Integer)
 
-boolean = (\a -> Expr a)                 <$> expr
-        <|> (\a -> Not a)                <$> boolean
+boolean =   (\a -> BoolConst True)         <$> token' "true"
+        <|> (\a -> BoolConst False)      <$> token' "false" 
+        <|> (\a -> Expr a)               <$> expr
+        <|> (\a -> Not a)                <$> expr
         <|> (\a _ b -> Less a b)         <$> expr <*> symbol' '<' <*> boolean
         <|> (\a _ b -> Greater a b)      <$> expr <*> symbol' '>' <*> boolean
         <|> (\a _ b -> LessEqual a b)    <$> expr <*> token' "<=" <*> boolean
         <|> (\a _ b -> GreaterEqual a b) <$> expr <*> token' ">=" <*> boolean
         <|> (\a _ b -> Equal a b)        <$> expr <*> token' "==" <*> boolean
         <|> (\a _ b -> Different a b)    <$> expr <*> token' "!=" <*> boolean
-        <|> (\a _ b -> And a b)          <$> boolean <*> token' "&&" <*> boolean
-        <|> (\a _ b -> Orl a b)          <$> boolean <*> token' "||" <*> boolean
-        <|> (\a _ b -> Implies a b)      <$> boolean <*> token' "==>" <*> boolean
-        <|> (\a -> BoolConst a)          <$> ??
+        <|> (\a _ b -> And a b)          <$> expr <*> token' "&&" <*> boolean
+        <|> (\a _ b -> Orl a b)          <$> expr <*> token' "||" <*> boolean
+        <|> (\a _ b -> Implies a b)      <$> expr <*> token' "==>" <*> boolean
+        
 
 
 {- Grupo 3
