@@ -7,7 +7,7 @@ import Data.Char
 {- Grupo 1
    Gramática SL -}
 
-data SL = Program String [DeclProg] [Pre] [Decl] [Inst] [PostN] [PostE]
+data SL = Program String [DeclProg] Boolean [Decl] [Inst] Boolean Boolean
         deriving Show
 
 data Pre = Pre Boolean
@@ -33,7 +33,7 @@ data TypeDecl = Int | Char | Bool
 data Inst = Assign      String Expr
           | IfThenElse  Boolean [Inst] [Inst]
           | For         Decl Boolean Expr [Inv] [Inst]
-          | While       Boolean [Inv] [Inst]
+          | While       Boolean Boolean [Inst]
           | Read        Expr
           | Print       Expr
           | Return      Expr
@@ -54,40 +54,51 @@ data Expr = Const Integer
           deriving (Show , Eq , Ord)
 
 data Boolean = Expr         Expr
-             | Greater      Expr Boolean
-             | GreaterEqual Expr Boolean
-             | Less         Expr Boolean
-             | LessEqual    Expr Boolean
+             | Greater      Expr Expr
+             | GreaterEqual Expr Expr
+             | Less         Expr Expr
+             | LessEqual    Expr Expr
              | And          Expr Boolean
              | Orl          Expr Boolean
-             | Equal        Expr Boolean
-             | Different    Expr Boolean
+             | Equal        Expr Expr
+             | Different    Expr Expr
              | BoolConst    Bool
              | Implies      Expr Boolean
              | Not          Expr
              deriving (Show , Eq , Ord)
 
+data Boolean2 = Expr2        Expr
+             | Greater2      Expr Expr
+             | GreaterEqual2 Expr Expr
+             | Less2         Expr Expr
+             | LessEqual2    Expr Expr
+             | And2          Boolean2 Boolean2
+             | Orl2          Boolean2 Boolean2
+             | Equal2        Expr Expr
+             | Different2    Expr Expr
+             | BoolConst2    Bool
+             | Implies2      Boolean2 Boolean2
+             | Not2          Boolean2
+             deriving (Show , Eq , Ord)
+
 {- Grupo 2
    Parser SL -}
 
-parser = f <$> token' "pre" <*> pres <*> token' "program" <*> pString <*> symbol' '(' <*> declsProg <*> symbol' ')' <*> symbol' '{' <*> decls
-          <*> spaces' <*> insts <*> symbol' '}' <*> token' "postn" <*> postsn <*> token' "poste" <*> postse
+parser = f <$> token' "pre" <*> pre <*> token' "program" <*> pString <*> symbol' '(' <*> declsProg <*> symbol' ')' <*> symbol' '{' <*> decls
+          <*> spaces' <*> insts <*> symbol' '}' <*> token' "postn" <*> postn <*> token' "poste" <*> poste
      where f _ a _ b _ g _ _ c _ d _ _ e _ f = Program b g a c d e f
 
-pres = zeroOrMore pre
 
 pre = f <$> boolean <*> symbol' ';'
-    where f a _ = Pre a
+    where f a _ = a
 
-postsn = zeroOrMore postn
 
 postn = f <$> boolean <*> symbol' ';'
-        where f a _ = PostN a
+        where f a _ = a
 
-postse = zeroOrMore poste
 
 poste = f <$> boolean <*> symbol' ';'
-                where f a _ = PostE a
+                where f a _ = a
 
 varios = oneOrMore vario
 
@@ -137,7 +148,7 @@ inst =  f  <$> token' "print"  <*> expr <*> symbol' ';'
      <|> l <$> token' "for" <*> symbol' '(' <*> decl <*> boolean <*> symbol' ';' <*> expr <*> symbol' ')'
          <*> symbol' '{' <*> token' "inv" <*> invs <*> insts <*> symbol' '}'
      <|> m <$> token' "while" <*> symbol' '(' <*> boolean <*> symbol' ')' <*> symbol' '{' <*> token' "inv"
-         <*> invs <*> insts <*> symbol' '}'
+         <*> boolean <*> symbol' ';' <*> insts <*> symbol' '}'
      <|> n <$> token' "try" <*> symbol' '{' <*> insts <*> symbol' '}' <*> token' "catch" <*> symbol' '{'
          <*> insts <*> symbol' '}'
      <|> o <$> token' "throw" <*> symbol' ';'
@@ -148,7 +159,7 @@ inst =  f  <$> token' "print"  <*> expr <*> symbol' ';'
          j _ a _ =                   Return a
          k _ a _ =                   Read a
          l _ _ a b _ c _ _ _ d e _ = For a b c d e
-         m _ _ a _ _ _ b c _ =       While a b c
+         m _ _ a _ _ _ b _ c _ =       While a b c
          n _ _ a _ _ _ b _ =         Try a b
          o _ _ =                     Throw
 
@@ -174,27 +185,60 @@ expressao =  f <$> pString
   where f a = Var a
         g a = Const (read a :: Integer)
 
-boolean =   (\a -> BoolConst True)         <$> token' "true"
+boolean =   (\a -> BoolConst True)       <$> token' "true"
         <|> (\a -> BoolConst False)      <$> token' "false" 
-        <|> (\a -> Expr a)               <$> expr
-        <|> (\a -> Not a)                <$> expr
-        <|> (\a _ b -> Less a b)         <$> expr <*> symbol' '<' <*> boolean
-        <|> (\a _ b -> Greater a b)      <$> expr <*> symbol' '>' <*> boolean
-        <|> (\a _ b -> LessEqual a b)    <$> expr <*> token' "<=" <*> boolean
-        <|> (\a _ b -> GreaterEqual a b) <$> expr <*> token' ">=" <*> boolean
-        <|> (\a _ b -> Equal a b)        <$> expr <*> token' "==" <*> boolean
-        <|> (\a _ b -> Different a b)    <$> expr <*> token' "!=" <*> boolean
+        <|> (\a _ b -> Less a b)         <$> expr <*> symbol' '<' <*> expr
+        <|> (\a _ b -> Greater a b)      <$> expr <*> symbol' '>' <*> expr
+        <|> (\a _ b -> LessEqual a b)    <$> expr <*> token' "<=" <*> expr
+        <|> (\a _ b -> GreaterEqual a b) <$> expr <*> token' ">=" <*> expr
+        <|> (\a _ b -> Equal a b)        <$> expr <*> token' "==" <*> expr
+        <|> (\a _ b -> Different a b)    <$> expr <*> token' "!=" <*> expr
         <|> (\a _ b -> And a b)          <$> expr <*> token' "&&" <*> boolean
         <|> (\a _ b -> Orl a b)          <$> expr <*> token' "||" <*> boolean
         <|> (\a _ b -> Implies a b)      <$> expr <*> token' "==>" <*> boolean
+        <|> (\a -> Expr a)               <$> expr
+        <|> (\a -> Not a)                <$> expr
         
 
+
+{-data Boolean = Expr         Expr
+             | Greater      Expr Boolean
+             | GreaterEqual Expr Boolean
+             | Less         Expr Boolean
+             | LessEqual    Expr Boolean
+             | And          Expr Boolean
+             | Orl          Expr Boolean
+             | Equal        Expr Boolean
+             | Different    Expr Boolean
+             | BoolConst    Bool
+             | Implies      Boolean Boolean
+             | Not          Expr
+-}
+
+boolTobool2 (Expr a) = (Expr2 a)
+boolTobool2 (Greater a b) = Greater2 a b
+boolTobool2 (GreaterEqual a b) = GreaterEqual2 a b
+boolTobool2 (Less a b) = Less2 a b
+boolTobool2 (LessEqual a b) = LessEqual2 a b
+boolTobool2 (And a b) = And2 (Expr2 a) (boolTobool2 b)
+boolTobool2 (Orl a b) = Orl2 (Expr2 a) (boolTobool2 b)
+boolTobool2 (Equal a b) = Equal2 a b
+boolTobool2 (Different a b) = Different2  a b
+boolTobool2 (BoolConst a ) = BoolConst2 a
+boolTobool2 (Implies a b) = Implies2 (Expr2 a) (boolTobool2 b)
+boolTobool2 (Not a)  = Not2 (Expr2 a)
+
+--boolTobool2 a = a
 
 {- Grupo 3
    Programas Sl -}
 
+
+slt = x
+   where ((x,y):xs) = parser "pre x>100; program a (int x;){ int b; while(x<1000){ inv 100<x; x = x;} } postn x==1000; poste false;"
+
 sl1 = x
-   where ((x,y):xs) = parser "pre a>c; b>c; program a (bool x; int y;){ int aux; int b; print aux; if (a>b) then {print a;} else {print b;} } postn a==5; poste false;"
+   where ((x,y):xs) = parser "pre a>c; program a (bool x; int y;){ int aux; int b; print aux; if (a>b) then {print a;} else {print b;} } postn a==5; poste false;"
 
 sl2 = x
    where ((x,y):xs) = parser "program a { int aux;int b; if(a>e) then {print aux;} else{r=r;} }"
@@ -203,7 +247,7 @@ sl3 = x
    where ((x,y):xs) = parser "program a {int aux=4;int b=t;aux= 10;print aux; print 10+5;if(x>5) then {b=5;} else{b=6;} }"
 
 sl4 = x
-   where ((x,y):xs) = parser "pre a>c; b>c; program a (int x; int y;) {int aux=4;int b=t;aux= 10;print aux; while(a>3){ inv a>c; aux=10;print t;} print t; } postn a==5; poste false;"
+   where ((x,y):xs) = parser "pre a>c; program a (int x; int y;) {int aux=4;int b=t;aux= 10;print aux; while(a>3){ inv a>c; aux=10;print t;} print t; } postn a==5; poste false;"
 
 sl4B = x
    where ((x,y):xs) = parser "pre a>c; b>c; program a (int x; int y;) {int aux=4;int b=t;aux= 10;print aux; try{ while(a>3){ inv a>c; if (aux>10) then { throw; } aux=10;print t;}} catch{print a;} print t; } postn a==5; poste false;"
