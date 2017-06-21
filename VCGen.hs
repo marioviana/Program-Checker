@@ -1,4 +1,4 @@
-module VCGen where
+module VC where
 
 import ParserSL
 import Z3.Monad
@@ -180,8 +180,8 @@ auxBP x = do
     mapM (\l -> reset >> assert l >> check) vc
 
 main = do 
-    putStrLn $ auxPrintVCs (vcg sl2)
-    final <- evalZ3 $ auxBP sl2
+    putStrLn $ auxPrintVCs (vcg sl1)
+    final <- evalZ3 $ auxBP sl1
     mapM_ print final
 
 

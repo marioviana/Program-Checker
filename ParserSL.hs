@@ -218,9 +218,12 @@ boolTobool2 (Not a)  = Not2 (Expr2 a)
 {- Grupo 3
    Programas Sl -}
 
+sl3 = x
+   where ((x,y):xs) = parser "pre d==10; program a (int d;){int x; d=1; } postn d==5; poste false;"
+
 
 sl1 = x
-   where ((x,y):xs) = parser "pre d==10; program a (int x;){ int nada; while(d<12){ inv d<12; d = d+1;} } postn d==12; poste false;"
+   where ((x,y):xs) = parser "pre d==10; program a (int d;){ int nada; while(d<12){ inv d<12; d = d+1;} } postn d==12; poste false;"
 
 sl2 = x
-   where ((x,y):xs) = parser "pre c > 12; program a (int x;){ int b; while(c>10){ inv c > 10; c = c-1;} } postn c==10; poste false;"
+   where ((x,y):xs) = parser "pre c > 12; program a (int d;){ int b; while(c!=10){ inv c > 10; c = c-1;} } postn c==10; poste false;"
