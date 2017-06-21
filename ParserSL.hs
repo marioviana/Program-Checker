@@ -5,7 +5,7 @@ import Prelude hiding ((<|>), (<*>), (<$>))
 import Data.Char
 
 {- Grupo 1
-   Gramática SL -}
+   Árvore -}
 
 data SL = Program String [DeclProg] Boolean [Decl] [Inst] Boolean Boolean
         deriving Show
@@ -201,20 +201,6 @@ boolean =   (\a -> BoolConst True)       <$> token' "true"
         
 
 
-{-data Boolean = Expr         Expr
-             | Greater      Expr Boolean
-             | GreaterEqual Expr Boolean
-             | Less         Expr Boolean
-             | LessEqual    Expr Boolean
-             | And          Expr Boolean
-             | Orl          Expr Boolean
-             | Equal        Expr Boolean
-             | Different    Expr Boolean
-             | BoolConst    Bool
-             | Implies      Boolean Boolean
-             | Not          Expr
--}
-
 boolTobool2 (Expr a) = (Expr2 a)
 boolTobool2 (Greater a b) = Greater2 a b
 boolTobool2 (GreaterEqual a b) = GreaterEqual2 a b
@@ -228,32 +214,13 @@ boolTobool2 (BoolConst a ) = BoolConst2 a
 boolTobool2 (Implies a b) = Implies2 (Expr2 a) (boolTobool2 b)
 boolTobool2 (Not a)  = Not2 (Expr2 a)
 
---boolTobool2 a = a
 
 {- Grupo 3
    Programas Sl -}
 
 
-slt = x
-   where ((x,y):xs) = parser "pre x>100; program a (int x;){ int b; while(x<1000){ inv 100<x; x = x+1;} } postn x==1000; poste false;"
-
 sl1 = x
-   where ((x,y):xs) = parser "pre a>c; program a (bool x; int y;){ int aux; int b; print aux; if (a>b) then {print a;} else {print b;} } postn a==5; poste false;"
+   where ((x,y):xs) = parser "pre d==10; program a (int x;){ int nada; while(d<12){ inv d<12; d = d+1;} } postn d==12; poste false;"
 
 sl2 = x
-   where ((x,y):xs) = parser "program a { int aux;int b; if(a>e) then {print aux;} else{r=r;} }"
-
-sl3 = x
-   where ((x,y):xs) = parser "program a {int aux=4;int b=t;aux= 10;print aux; print 10+5;if(x>5) then {b=5;} else{b=6;} }"
-
-sl4 = x
-   where ((x,y):xs) = parser "pre a>c; program a (int x; int y;) {int aux=4;int b=t;aux= 10;print aux; while(a>3){ inv a>c; aux=10;print t;} print t; } postn a==5; poste false;"
-
-sl4B = x
-   where ((x,y):xs) = parser "pre a>c; b>c; program a (int x; int y;) {int aux=4;int b=t;aux= 10;print aux; try{ while(a>3){ inv a>c; if (aux>10) then { throw; } aux=10;print t;}} catch{print a;} print t; } postn a==5; poste false;"
-
-sl5 = x
-   where ((x,y):xs) = parser "program a {int aux=4;int b=t;aux= 10;print aux; for(int a=1;a>3;a=4){aux=10;print t;}print t; }"
-
-sl6 = x
-   where ((x,y):xs) = parser "program a {int aux=4;int b=t;aux= 10;print aux; for(int a=1;a>3;a=4){while(a>4){r=t;}aux=10;print t;}print t; }"
+   where ((x,y):xs) = parser "pre c > 12; program a (int x;){ int b; while(c>10){ inv c > 10; c = c-1;} } postn c==10; poste false;"

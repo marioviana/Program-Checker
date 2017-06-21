@@ -3,165 +3,151 @@ module VCGen where
 import ParserSL
 import Z3.Monad
 
-intExprToZ3 (Var s) = mkFreshIntVar s
+exprZ (Var s) = mkFreshIntVar s
 
-intExprToZ3 (Const c) = mkInteger c
+exprZ (Const c) = mkInteger c
 
-intExprToZ3 (Add a b) = do {
-  c <- intExprToZ3 a;
-  d <- intExprToZ3 b;
+exprZ (Add a b) = do {
+  c <- exprZ a;
+  d <- exprZ b;
   mkAdd [c, d]
 }
 
-intExprToZ3 (Mul a b) = do {
-  c <- intExprToZ3 a;
-  d <- intExprToZ3 b;
+exprZ (Mul a b) = do {
+  c <- exprZ a;
+  d <- exprZ b;
   mkMul [c, d]
 }
 
-intExprToZ3 (Div a b) = do {
-  c <- intExprToZ3 a;
-  d <- intExprToZ3 b;
+exprZ (Div a b) = do {
+  c <- exprZ a;
+  d <- exprZ b;
   mkDiv c d
 }
 
-intExprToZ3 (Sub a b) = do {
-  c <- intExprToZ3 a;
-  d <- intExprToZ3 b;
+exprZ (Sub a b) = do {
+  c <- exprZ a;
+  d <- exprZ b;
   mkSub [c, d]
 }
 
-boolExprToZ3 (BoolConst2 e)
+booleanZ (Expr2 e) = exprZ e
+
+booleanZ (BoolConst2 e)
       | e = mkTrue
       | otherwise = mkFalse
 
-boolExprToZ3 (Less2 a b) = do {
-  c <- intExprToZ3 a;
-  d <- intExprToZ3 b;
+booleanZ (Less2 a b) = do {
+  c <- exprZ a;
+  d <- exprZ b;
   mkLt c d
 }
 
-boolExprToZ3 (Not2 a) = boolExprToZ3 a >>= mkNot
+booleanZ (Not2 a) = booleanZ a >>= mkNot
 
 
-boolExprToZ3 (LessEqual2 a b) = do {
-  c <- intExprToZ3 a;
-  d <- intExprToZ3 b;
+booleanZ (LessEqual2 a b) = do {
+  c <- exprZ a;
+  d <- exprZ b;
   mkLe c d
 }
 
-boolExprToZ3 (Greater2 a b) = do {
-  c <- intExprToZ3 a;
-  d <- intExprToZ3 b;
+booleanZ (Greater2 a b) = do {
+  c <- exprZ a;
+  d <- exprZ b;
   mkGt c d
 }
 
-boolExprToZ3 (GreaterEqual2 a b) = do {
-  c <- intExprToZ3 a;
-  d <- intExprToZ3 b;
+booleanZ (GreaterEqual2 a b) = do {
+  c <- exprZ a;
+  d <- exprZ b;
   mkGe c d
 }
 
-boolExprToZ3 (Equal2 a b) = do {
-  c <- intExprToZ3 a;
-  d <- intExprToZ3 b;
+booleanZ (Equal2 a b) = do {
+  c <- exprZ a;
+  d <- exprZ b;
   mkEq c d
 }
 
-boolExprToZ3 (Different2 a b) = do {
-  c <- intExprToZ3 a;
-  d <- intExprToZ3 b;
+booleanZ (Different2 a b) = do {
+  c <- exprZ a;
+  d <- exprZ b;
   mkEq c d >>= mkNot
 }
 
 
 
-boolExprToZ3 (And2 a b) = do {
-  c <- boolExprToZ3 a;
-  d <- boolExprToZ3 b;
+booleanZ (And2 a b) = do {
+  c <- booleanZ a;
+  d <- booleanZ b;
   mkAnd [c,d]
 }
 
-boolExprToZ3 (Orl2 a b) = do {
-  c <- boolExprToZ3 a;
-  d <- boolExprToZ3 b;
+booleanZ (Orl2 a b) = do {
+  c <- booleanZ a;
+  d <- booleanZ b;
   mkOr [c,d]
 }
 
-boolExprToZ3 (Implies2 a b) = do {
-  c <- boolExprToZ3 a;
-  d <- boolExprToZ3 b;
+booleanZ (Implies2 a b) = do {
+  c <- booleanZ a;
+  d <- booleanZ b;
   mkImplies c d
 }
 
-vcs :: MonadZ3 z3 => SL -> z3 [AST]
-vcs = sequence . vcg2Z3 . vcg
 
-vcs' :: MonadZ3 z3 => SL -> z3 AST
-vcs' t = vcs t >>= mkAnd
-
-vcg2Z3 ::MonadZ3 z3 => [Boolean2] -> [z3 AST]
-vcg2Z3 s | s == [] = []
-         | otherwise = map boolExprToZ3 s
+gera_vc = sequence . vcgZ . vcg
 
 
-vcg :: SL -> [Boolean2]
+vcgZ a = if a == [] then [] else map booleanZ a
+
+
+
 vcg (Program a b c d e f g) = [(Implies2 (boolTobool2 c) (wp e (boolTobool2 f) (boolTobool2 g) ))] ++ (vcaux e (boolTobool2 f) (boolTobool2 g))
 
 
 
----------
-
-
-
-vcaux :: [Inst] -> Boolean2 -> Boolean2 -> [Boolean2]
 vcaux [] q1 q2 = []
-vcaux [Throw] q1 q2 = []
 vcaux [Assign v i] q1 q2 = []
-vcaux [Try s1 s2] q1 q2 = (vcaux s1 q1 q2) ++ (vcaux s2 q1 q2)
 vcaux [IfThenElse b s1 s2] q1 q2 = (vcaux s1 q1 q2) ++ (vcaux s2 q1 q2)
 vcaux [While b i s] q1 q2 = (([Implies2 (And2 (boolTobool2 i) (boolTobool2 b)) (wp s (boolTobool2 i) q2),
                             Implies2 (And2 (boolTobool2 i) (Not2 (boolTobool2 b))) q1])) ++ (vcaux s (boolTobool2 i) q2)
+vcaux [Try s1 s2] q1 q2 = (vcaux s1 q1 q2) ++ (vcaux s2 q1 q2)
+vcaux [Throw] q1 q2 = []
 vcaux (s1:sn) q1 q2 = (vcaux [s1] (wp sn q1 q2) q2) ++ (vcaux sn q1 q2)
 
 
-wp:: [Inst] -> Boolean2 -> Boolean2 -> Boolean2
 wp [] q1 q2 = q1
-wp [Throw] q1 q2 = q2
-wp [Assign x e] q1 q2 = subBexp q1 x e
-wp [Try s1 s2] q1 q2 = (wp s1 q1 (wp s2 q1 q2)) 
+wp [Assign x e] q1 q2 = aux1 q1 x e 
 wp [IfThenElse b s1 s2] q1 q2 = And2 (Implies2 (boolTobool2 b) (wp s1 q1 q2)) (Implies2 (Not2 (boolTobool2 b)) (wp s2 q1 q2))
 wp [While b i s] q1 q2 = (boolTobool2 i)
+wp [Try s1 s2] q1 q2 = (wp s1 q1 (wp s2 q1 q2))
+wp [Throw] q1 q2 = q2
 wp (s1:sn) q1 q2 = (wp [s1] (wp sn q1 q2) q2)
 
 
+aux1 (Greater2 a b) x e = Greater2 (aux2 a x e) (aux2 b x e)
+aux1 (GreaterEqual2 a b) x e = GreaterEqual2 (aux2 a x e) (aux2 b x e)
+aux1 (Less2 a b) x e = Less2 (aux2 a x e) (aux2 b x e)
+aux1 (LessEqual2 a b) x e = LessEqual2 (aux2 a x e) (aux2 b x e)
+aux1 (Equal2 a b) x e = Equal2 (aux2 a x e) (aux2 b x e)
+aux1 (Different2 a b) x e = Different2 (aux2 a x e) (aux2 b x e)
+aux1 (Not2 a) x e = Not2 (aux1 a x e)
+aux1 (And2 a b) x e = And2 (aux1 a x e) (aux1 b x e)
+aux1 (Orl2 a b) x e = Orl2 (aux1 a x e) (aux1 b x e)
+aux1 (Implies2 a b) x e = Implies2 (aux1 a x e) (aux1 b x e)
+aux1 a x e = a
 
 
-
-
-subBexp :: Boolean2 -> String -> Expr -> Boolean2
-subBexp (Greater2 a b) x e = Greater2 (substitute a x e) (substitute b x e)
-subBexp (GreaterEqual2 a b) x e = GreaterEqual2 (substitute a x e) (substitute b x e)
-subBexp (Less2 a b) x e = Less2 (substitute a x e) (substitute b x e)
-subBexp (LessEqual2 a b) x e = LessEqual2 (substitute a x e) (substitute b x e)
-subBexp (Equal2 a b) x e = Equal2 (substitute a x e) (substitute b x e)
-subBexp (Different2 a b) x e = Different2 (substitute a x e) (substitute b x e)
-subBexp (Not2 a) x e = Not2 (subBexp a x e)
-subBexp (And2 a b) x e = And2 (subBexp a x e) (subBexp b x e)
-subBexp (Orl2 a b) x e = Orl2 (subBexp a x e) (subBexp b x e)
-subBexp (Implies2 a b) x e = Implies2 (subBexp a x e) (subBexp b x e)
-subBexp a x e = a
-
-
-substitute:: Expr -> String -> Expr -> Expr
-substitute (Var a) x e = if a == x then e
+aux2 (Var a) x e = if a == x then e
                             else Var a
-substitute (Add a b) x e  = Add (substitute a x e) (substitute b x e)
-substitute (Mul a b) x e  = Mul (substitute a x e) (substitute b x e)
-substitute (Sub a b) x e  = Sub (substitute a x e) (substitute b x e)
-substitute (Div a b) x e  = Div (substitute a x e) (substitute b x e)
-substitute (Same a b) x e = Same (substitute a x e) (substitute b x e)
-substitute a x e = a
+aux2 (Add a b) x e  = Add (aux2 a x e) (aux2 b x e)
+aux2 (Mul a b) x e  = Mul (aux2 a x e) (aux2 b x e)
+aux2 (Sub a b) x e  = Sub (aux2 a x e) (aux2 b x e)
+aux2 (Div a b) x e  = Div (aux2 a x e) (aux2 b x e)
+aux2 (Same a b) x e = Same (aux2 a x e) (aux2 b x e)
+aux2 a x e = a
 
 
 auxPrintVCs []     = []
@@ -179,7 +165,7 @@ auxPrintVC (Equal2 a b) = (auxPrintExpr a) ++ " == " ++ (auxPrintExpr b)
 auxPrintVC (Different2 a b) = (auxPrintExpr a) ++ " != " ++ (auxPrintExpr b)
 auxPrintVC (BoolConst2 a) = show a
 auxPrintVC (Implies2 a b) = (auxPrintVC a) ++ " ==> " ++ (auxPrintVC b)
-auxPrintVC (Not2 a ) = "! (" ++ (auxPrintVC a) ++ ")"
+auxPrintVC (Not2 a ) = "not (" ++ (auxPrintVC a) ++ ")"
 
 auxPrintExpr (Const a) = show a
 auxPrintExpr (Var a) = a
@@ -189,19 +175,14 @@ auxPrintExpr (Div a b) = (auxPrintExpr a) ++ " / " ++ (auxPrintExpr b)
 auxPrintExpr (Sub a b) = (auxPrintExpr a) ++ " - " ++ (auxPrintExpr b)
 auxPrintExpr (Same a b) = (auxPrintExpr a) ++ " = " ++ (auxPrintExpr b)
 
-
-
-
-script :: SL -> Z3 [Result]
-script x = do
-    vc <- vcs x
+auxBP x = do
+    vc <- gera_vc x
     mapM (\l -> reset >> assert l >> check) vc
 
 main = do 
-    putStrLn $ auxPrintVCs (vcg slt)
-
-    result <- evalZ3 $ script slt
-    mapM_ print result
+    putStrLn $ auxPrintVCs (vcg sl2)
+    final <- evalZ3 $ auxBP sl2
+    mapM_ print final
 
 
 
