@@ -31,5 +31,5 @@ program a (int x; int y;){
 postn
   a==5;
 poste
-  false;
+  false; 
 ```

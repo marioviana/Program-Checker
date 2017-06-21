@@ -3,83 +3,7 @@ module ParserSL where
 import Lib
 import Prelude hiding ((<|>), (<*>), (<$>))
 import Data.Char
-
-{- Grupo 1
-   Árvore -}
-
-data SL = Program String [DeclProg] Boolean [Decl] [Inst] Boolean Boolean
-        deriving Show
-
-data Pre = Pre Boolean
-         deriving (Show, Eq, Ord)
-
-data PostN = PostN Boolean
-         deriving (Show, Eq, Ord)
-
-data PostE = PostE Boolean
-         deriving (Show, Eq, Ord)
-
-data Decl = Atr  TypeDecl String Expr
-          | AtrT TypeDecl String
-          | AtrS TypeDecl [Expr]
-          deriving (Show , Eq , Ord)
-
-data DeclProg = AtrProg TypeDecl String
-          deriving (Show , Eq , Ord)
-
-data TypeDecl = Int | Char | Bool
-              deriving (Show , Eq , Ord)
-
-data Inst = Assign      String Expr
-          | IfThenElse  Boolean [Inst] [Inst]
-          | For         Decl Boolean Expr [Inv] [Inst]
-          | While       Boolean Boolean [Inst]
-          | Read        Expr
-          | Print       Expr
-          | Return      Expr
-          | Try         [Inst] [Inst]
-          | Throw
-          deriving (Show , Eq , Ord)
-
-data Inv = Inv Boolean
-         deriving (Show, Eq, Ord)
-
-data Expr = Const Integer
-          | Var   String
-          | Add   Expr Expr
-          | Mul   Expr Expr
-          | Div   Expr Expr
-          | Sub   Expr Expr
-          | Same  Expr Expr
-          deriving (Show , Eq , Ord)
-
-data Boolean = Expr         Expr
-             | Greater      Expr Expr
-             | GreaterEqual Expr Expr
-             | Less         Expr Expr
-             | LessEqual    Expr Expr
-             | And          Expr Boolean
-             | Orl          Expr Boolean
-             | Equal        Expr Expr
-             | Different    Expr Expr
-             | BoolConst    Bool
-             | Implies      Expr Boolean
-             | Not          Expr
-             deriving (Show , Eq , Ord)
-
-data Boolean2 = Expr2        Expr
-             | Greater2      Expr Expr
-             | GreaterEqual2 Expr Expr
-             | Less2         Expr Expr
-             | LessEqual2    Expr Expr
-             | And2          Boolean2 Boolean2
-             | Orl2          Boolean2 Boolean2
-             | Equal2        Expr Expr
-             | Different2    Expr Expr
-             | BoolConst2    Bool
-             | Implies2      Boolean2 Boolean2
-             | Not2          Boolean2
-             deriving (Show , Eq , Ord)
+import AST
 
 {- Grupo 2
    Parser SL -}
@@ -88,14 +12,11 @@ parser = f <$> token' "pre" <*> pre <*> token' "program" <*> pString <*> symbol'
           <*> spaces' <*> insts <*> symbol' '}' <*> token' "postn" <*> postn <*> token' "poste" <*> poste
      where f _ a _ b _ g _ _ c _ d _ _ e _ f = Program b g a c d e f
 
-
 pre = f <$> boolean <*> symbol' ';'
     where f a _ = a
 
-
 postn = f <$> boolean <*> symbol' ';'
         where f a _ = a
-
 
 poste = f <$> boolean <*> symbol' ';'
                 where f a _ = a
@@ -128,9 +49,9 @@ decl =  f  <$> pTypeInt'  <*> pString <*> symbol' '=' <*> expr <*> symbol' ';'
 
 declsProg = oneOrMore declProg
 
-declProg = i  <$> pTypeInt'  <*> pString <*> symbol' ';'
-    <|> j  <$> pTypeChar' <*> pString <*> symbol' ';'
-    <|> k  <$> pTypeBool' <*> pString <*> symbol' ';'
+declProg = i <$> pTypeInt'  <*> pString <*> symbol' ';'
+    <|> j <$> pTypeChar' <*> pString <*> symbol' ';'
+    <|> k <$> pTypeBool' <*> pString <*> symbol' ';'
      where i _ b _     =  AtrProg Int b
            j _ b _     =  AtrProg Char b
            k _ b _     =  AtrProg Bool b
@@ -159,7 +80,7 @@ inst =  f  <$> token' "print"  <*> expr <*> symbol' ';'
          j _ a _ =                   Return a
          k _ a _ =                   Read a
          l _ _ a b _ c _ _ _ d e _ = For a b c d e
-         m _ _ a _ _ _ b _ c _ =       While a b c
+         m _ _ a _ _ _ b _ c _ =     While a b c
          n _ _ a _ _ _ b _ =         Try a b
          o _ _ =                     Throw
 
@@ -186,20 +107,18 @@ expressao =  f <$> pString
         g a = Const (read a :: Integer)
 
 boolean =   (\a -> BoolConst True)       <$> token' "true"
-        <|> (\a -> BoolConst False)      <$> token' "false" 
+        <|> (\a -> BoolConst False)      <$> token' "false"
         <|> (\a _ b -> Less a b)         <$> expr <*> symbol' '<' <*> expr
         <|> (\a _ b -> Greater a b)      <$> expr <*> symbol' '>' <*> expr
         <|> (\a _ b -> LessEqual a b)    <$> expr <*> token' "<=" <*> expr
         <|> (\a _ b -> GreaterEqual a b) <$> expr <*> token' ">=" <*> expr
         <|> (\a _ b -> Equal a b)        <$> expr <*> token' "==" <*> expr
         <|> (\a _ b -> Different a b)    <$> expr <*> token' "!=" <*> expr
-        <|> (\a _ b -> And a b)          <$> expr <*> token' "&&" <*> boolean
-        <|> (\a _ b -> Orl a b)          <$> expr <*> token' "||" <*> boolean
+        <|> (\a _ b -> And a b)          <$> expr <*> token' "||" <*> boolean
+        <|> (\a _ b -> Orl a b)          <$> expr <*> token' "&&" <*> boolean
         <|> (\a _ b -> Implies a b)      <$> expr <*> token' "==>" <*> boolean
         <|> (\a -> Expr a)               <$> expr
         <|> (\a -> Not a)                <$> expr
-        
-
 
 boolTobool2 (Expr a) = (Expr2 a)
 boolTobool2 (Greater a b) = Greater2 a b
@@ -214,16 +133,14 @@ boolTobool2 (BoolConst a ) = BoolConst2 a
 boolTobool2 (Implies a b) = Implies2 (Expr2 a) (boolTobool2 b)
 boolTobool2 (Not a)  = Not2 (Expr2 a)
 
-
 {- Grupo 3
    Programas Sl -}
-
-sl3 = x
-   where ((x,y):xs) = parser "pre d==10; program a (int d;){int x; d=1; } postn d==5; poste false;"
-
 
 sl1 = x
    where ((x,y):xs) = parser "pre d==10; program a (int d;){ int nada; while(d<12){ inv d<12; d = d+1;} } postn d==12; poste false;"
 
 sl2 = x
-   where ((x,y):xs) = parser "pre c > 12; program a (int d;){ int b; while(c!=10){ inv c > 10; c = c-1;} } postn c==10; poste false;"
+   where ((x,y):xs) = parser "pre c>12; program a (int d;){ int b; while(c!=10){ inv c > 10; c = c-1;} } postn c==10; poste false;"
+
+sl3 = x
+   where ((x,y):xs) = parser "pre d==10; program a (int d;){int x; d=1; } postn d==5; poste false;"

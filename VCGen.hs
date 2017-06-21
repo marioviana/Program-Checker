@@ -1,5 +1,6 @@
 module VC where
 
+import AST
 import ParserSL
 import Z3.Monad
 
@@ -99,12 +100,10 @@ booleanZ (Implies2 a b) = do {
 
 gera_vc = sequence . vcgZ . vcg
 
-
 vcgZ a = if a == [] then [] else map booleanZ a
 
-
-
-vcg (Program a b c d e f g) = [(Implies2 (boolTobool2 c) (wp e (boolTobool2 f) (boolTobool2 g) ))] ++ (vcaux e (boolTobool2 f) (boolTobool2 g))
+vcg (Program a b c d e f g) = [(Implies2 (boolTobool2 c) (wp e (boolTobool2 f) (boolTobool2 g) ))]
+                              ++ (vcaux e (boolTobool2 f) (boolTobool2 g))
 
 
 
@@ -119,7 +118,7 @@ vcaux (s1:sn) q1 q2 = (vcaux [s1] (wp sn q1 q2) q2) ++ (vcaux sn q1 q2)
 
 
 wp [] q1 q2 = q1
-wp [Assign x e] q1 q2 = aux1 q1 x e 
+wp [Assign x e] q1 q2 = aux1 q1 x e
 wp [IfThenElse b s1 s2] q1 q2 = And2 (Implies2 (boolTobool2 b) (wp s1 q1 q2)) (Implies2 (Not2 (boolTobool2 b)) (wp s2 q1 q2))
 wp [While b i s] q1 q2 = (boolTobool2 i)
 wp [Try s1 s2] q1 q2 = (wp s1 q1 (wp s2 q1 q2))
@@ -179,11 +178,7 @@ auxBP x = do
     vc <- gera_vc x
     mapM (\l -> reset >> assert l >> check) vc
 
-main = do 
+main = do
     putStrLn $ auxPrintVCs (vcg sl1)
     final <- evalZ3 $ auxBP sl1
     mapM_ print final
-
-
-
-

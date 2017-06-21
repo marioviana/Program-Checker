@@ -1,9 +1,9 @@
-pre d==10; 
+pre d==10;
 
-  program a (int d;){
-    int x;
-    d=1; 
-  }
+program a (int d;){
+  int x;
+  d=1;
+}
 
 postn d==5;
 poste false;

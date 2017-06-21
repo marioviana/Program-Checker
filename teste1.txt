@@ -1,11 +1,12 @@
-pre d==10; 
+pre d==10;
 
-program teste1 (int d;){
+program a (int d;){
   int nada;
   while(d<12){
     inv d<12;
-    d = d+1;} 
-  } 
+    d = d+1;
+  }
+}
 
 postn d==12;
 poste false;
